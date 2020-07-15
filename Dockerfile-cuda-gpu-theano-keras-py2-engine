@@ -1,0 +1,87 @@
+# Dockerfile
+FROM docker.repository.cloudera.com/cdsw/engine:10
+
+MAINTAINER Minling Xie "minling.xie@cloudera.com"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+gnupg2 curl ca-certificates && \
+curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub | apt-key add - && \
+echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \
+echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list && \
+apt-get purge --autoremove -y curl && \
+rm -rf /var/lib/apt/lists/*
+
+ENV CUDA_VERSION 10.1.243
+LABEL com.nvidia.cuda.version="${CUDA_VERSION}"
+
+ENV CUDA_PKG_VERSION 10-1=$CUDA_VERSION-1
+ENV CUDA_PKG_COMPAT_VERSION 10-1=418.87.01-1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cuda-nvrtc-$CUDA_PKG_VERSION \
+        cuda-nvgraph-$CUDA_PKG_VERSION \
+        cuda-cusolver-$CUDA_PKG_VERSION \
+        cuda-cufft-$CUDA_PKG_VERSION \
+        cuda-curand-$CUDA_PKG_VERSION \
+        cuda-cusparse-$CUDA_PKG_VERSION \
+        cuda-npp-$CUDA_PKG_VERSION \
+        cuda-cudart-$CUDA_PKG_VERSION \
+        cuda-compat-$CUDA_PKG_COMPAT_VERSION \
+        cuda-libraries-$CUDA_PKG_VERSION \
+        cuda-license-$CUDA_PKG_VERSION \
+        cuda-nvjpeg-$CUDA_PKG_VERSION \
+        cuda-nvtx-$CUDA_PKG_VERSION && \
+    ln -s cuda-10.1 /usr/local/cuda && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN echo "/usr/local/cuda/lib64" >> /etc/ld.so.conf.d/cuda.conf && \
+    ldconfig
+
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
+    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+RUN echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+
+ENV CUDNN_VERSION 7.6.5.32
+LABEL com.nvidia.cudnn.version="${CUDNN_VERSION}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+            libcudnn7=$CUDNN_VERSION-1+cuda10.1 && \
+    apt-mark hold libcudnn7 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+            libnccl2=2.4.8-1+cuda10.1 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /opt/conda/envs/python2.7
+#RUN conda update -n base -c defaults conda
+RUN conda install -y theano pygpu python=2.7.17 -n python2.7
+RUN conda install -y keras python=2.7.17 -n python2.7
+
+# RUN conda install -y xgboost python=2.7.17 -n python2.7
+RUN conda install -y lightgbm python=2.7.17 -n python2.7
+# RUN conda install -y sklearn_pandas python=2.7.17 -n python2.7
+# RUN conda install -y sklearn2pmml python=2.7.17 -n python2.7
+RUN conda install -y pydotplus python=2.7.17 -n python2.7
+RUN conda install -y backcall python=2.7.17 -n python2.7
+RUN conda install -y hyperopt python=2.7.17 -n python2.7
+RUN conda install -y future python=2.7.17 -n python2.7
+RUN conda install -y tqdm python=2.7.17 -n python2.7
+RUN conda install -y joblib python=2.7.17 -n python2.7
+RUN conda install -y networkx python=2.7.17 -n python2.7
+# RUN conda install -y factor_analyzer python=2.7.17 -n python2.7
+# RUN conda install -y featuretools python=2.7.17 -n python2.7
+RUN conda install -y scikit-learn python=2.7.17 -n python2.7
+# RUN conda install -y optuna python=2.7.17 -n python2.7
+RUN conda install -y Statsmodels python=2.7.17 -n python2.7
+RUN conda install -y pyhive python=2.7.17 -n python2.7
+# RUN conda install -y impala python=2.7.17 -n python2.7
+RUN conda install -y impyla python=2.7.17 -n python2.7
+# RUN conda install -y woe python=2.7.17 -n python2.7
+RUN conda install -y graphviz python=2.7.17 -n python2.7
+# RUN conda install -y scikit-fuzzy python=2.7.17 -n python2.7
+
+ENV PYTHONPATH $PYTHONPATH:/opt/conda/envs/python2.7/lib/python2.7/site-packages

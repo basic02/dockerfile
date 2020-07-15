@@ -1,0 +1,86 @@
+# Dockerfile
+FROM docker.repository.cloudera.com/cdsw/engine:10
+
+MAINTAINER Minling Xie "minling.xie@cloudera.com"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+gnupg2 curl ca-certificates && \
+curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub | apt-key add - && \
+echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \
+echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list && \
+apt-get purge --autoremove -y curl && \
+rm -rf /var/lib/apt/lists/*
+
+ENV CUDA_VERSION 10.1.243
+LABEL com.nvidia.cuda.version="${CUDA_VERSION}"
+
+ENV CUDA_PKG_VERSION 10-1=$CUDA_VERSION-1
+ENV CUDA_PKG_COMPAT_VERSION 10-1=418.87.01-1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cuda-nvrtc-$CUDA_PKG_VERSION \
+        cuda-nvgraph-$CUDA_PKG_VERSION \
+        cuda-cusolver-$CUDA_PKG_VERSION \
+        cuda-cufft-$CUDA_PKG_VERSION \
+        cuda-curand-$CUDA_PKG_VERSION \
+        cuda-cusparse-$CUDA_PKG_VERSION \
+        cuda-npp-$CUDA_PKG_VERSION \
+        cuda-cudart-$CUDA_PKG_VERSION \
+        cuda-compat-$CUDA_PKG_COMPAT_VERSION \
+        cuda-libraries-$CUDA_PKG_VERSION \
+        cuda-license-$CUDA_PKG_VERSION \
+        cuda-nvjpeg-$CUDA_PKG_VERSION \
+        cuda-nvtx-$CUDA_PKG_VERSION && \
+    ln -s cuda-10.1 /usr/local/cuda && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN echo "/usr/local/cuda/lib64" >> /etc/ld.so.conf.d/cuda.conf && \
+    ldconfig
+
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
+    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+RUN echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list
+
+ENV CUDNN_VERSION 7.6.5.32
+LABEL com.nvidia.cudnn.version="${CUDNN_VERSION}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+            libcudnn7=$CUDNN_VERSION-1+cuda10.1 && \
+    apt-mark hold libcudnn7 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+            libnccl2=2.4.8-1+cuda10.1 && \
+    rm -rf /var/lib/apt/lists/*
+
+#RUN pip3 install --upgrade pip && pip install --upgrade pip
+RUN pip3 install --upgrade setuptools && pip install --upgrade setuptools
+RUN pip3 install mxnet-cu101
+
+RUN pip3 install xgboost==1.1.1 && pip install xgboost==0.82
+RUN pip3 install lightgbm==2.3.1 && pip install lightgbm==2.3.1
+RUN pip3 install sklearn_pandas==1.8.0 && pip install sklearn_pandas==1.8.0
+RUN pip3 install sklearn2pmml==0.59.0 && pip install sklearn2pmml==0.59.0
+RUN pip3 install pydotplus==2.0.2 && pip install pydotplus==2.0.2
+RUN pip3 install backcall==0.2.0 && pip install backcall==0.2.0
+RUN pip3 install hyperopt==0.2.4 && pip install hyperopt==0.2.4
+RUN pip3 install future==0.18.2 && pip install future==0.18.2
+RUN pip3 install tqdm==4.47.0 && pip install tqdm==4.47.0
+RUN pip3 install joblib==0.16.0 && pip install joblib==0.14.1
+RUN pip3 install networkx==2.4 && pip install networkx==2.2
+RUN pip3 install factor_analyzer==0.3.2 && pip install factor_analyzer==0.3.2
+RUN pip3 install featuretools==0.17.0 && pip install featuretools==0.11.0
+RUN pip3 install scikit-learn==0.23.1 && pip install scikit-learn==0.20.4
+RUN pip3 install scipy==1.4.1
+RUN pip3 install optuna==1.5.0
+RUN pip3 install Statsmodels==0.11.1 && pip install Statsmodels==0.11.0
+RUN pip3 install pyhive==0.6.2 && pip install pyhive==0.6.2
+RUN pip3 install impala==0.2 && pip install impala==0.2
+RUN pip3 install impyla==0.16.2 && pip install impyla==0.16.2
+RUN pip3 install woe==0.1.4 && pip install woe==0.1.4
+# RUN pip3 install graphviz==0.14 && pip install graphviz==0.14
+RUN pip3 install scikit-fuzzy==0.4.2 && pip install scikit-fuzzy==0.4.2
+RUN pip3 install attrs==19.1.0 && pip install attrs==19.1.0
